@@ -1,0 +1,9 @@
+# OBX -> Observation (one per OBX; following NTE segments become Observation.note)
+resource: Observation
+segment: OBX
+fields:
+  - {to: status,            from: OBX-11, transform: {map: {F: final, P: preliminary, C: corrected, X: cancelled}}, required: true}
+  - {to: "category[0]",     const: {coding: [{system: "http://terminology.hl7.org/CodeSystem/observation-category", code: laboratory}]}}
+  - {to: code,              from: OBX-3,  transform: ce, required: true}
+  - {to: "value[x]",        from: [OBX-2, OBX-5, OBX-6], transform: obx_value}
+  - {to: effectiveDateTime, from: OBX-14, transform: v2_ts}

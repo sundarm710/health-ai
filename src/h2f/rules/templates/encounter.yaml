@@ -1,0 +1,10 @@
+# PV1 -> Encounter
+resource: Encounter
+segment: PV1
+fields:
+  - {to: "identifier[0].value", from: PV1-19, required: true}
+  - {to: "identifier[0].system", const: "http://hospital.example.org/visit"}
+  - {to: class,                 from: PV1-2,  transform: patient_class, required: true}
+  - {to: status,                from: PV1-45, transform: encounter_status, always: true}
+  - {to: period.start,          from: PV1-44, transform: v2_ts}
+  - {to: period.end,            from: PV1-45, transform: v2_ts}

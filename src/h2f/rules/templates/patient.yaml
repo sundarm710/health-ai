@@ -1,0 +1,17 @@
+# PID -> Patient  (subset of the HL7 v2-to-FHIR IG "PID[Patient]" segment map)
+resource: Patient
+segment: PID
+fields:
+  - {to: "identifier[0].value",  from: PID-3.1, required: true}
+  - {to: "identifier[0].system", from: PID-3.4, transform: assigning_authority, required: true}
+  - {to: "name[0].family",       from: PID-5.1, required: true}
+  - {to: "name[0].given[]",      from: PID-5.2}
+  - {to: "name[0].given[]",      from: PID-5.3}
+  - {to: birthDate,              from: PID-7,   transform: v2_date}
+  - {to: gender,                 from: PID-8,   transform: {map: {M: male, F: female, O: other, U: unknown}}}
+  - {to: "address[0].line[]",    from: PID-11.1}
+  - {to: "address[0].city",      from: PID-11.3}
+  - {to: "address[0].state",     from: PID-11.4}
+  - {to: "address[0].postalCode", from: PID-11.5}
+  - {to: "address[0].country",   from: PID-11.6}
+  - {to: "telecom[0]",           from: PID-13.1, transform: phone}

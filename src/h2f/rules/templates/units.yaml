@@ -1,0 +1,3 @@
+# UCUM codes this site is known to send. Exact match only: the rules layer does not guess.
+ucum: ["%", "/[HPF]", "10*3/uL", "10*6/uL", "U/L", "[pH]", "fL", "g/L", "g/dL", "mL/min",
+       "mL/min/{1.73_m2}", "mg/dL", "mmol/L", "pH", "pg", "s", "{INR}", "{SG}", "{nominal}", "{presence}"]
