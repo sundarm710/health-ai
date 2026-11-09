@@ -100,6 +100,12 @@ def _pulse(df: pd.DataFrame, span: str | None) -> None:
         st.markdown("##### Latency distribution")
         st.altair_chart(charts.latency_hist(an.histogram(df), cur["p95"]), width="stretch")
         st.caption("Log scale. A second hump to the right means two populations, usually a cache hit vs miss or a slow route.")
+    st.space("large")
+    st.markdown("##### Latency by route · top 10 by volume")
+    buckets, stats = an.route_distribution(df, top=10)
+    st.altair_chart(charts.route_distribution(buckets, stats), width="stretch")
+    st.caption("Each row is one route; darker cells hold more of that route's requests. Blue tick = p50 (typical), orange tick = p95 (the slow tail). "
+               "A wide smear or a far-right p95 marks the route to look at first. Hover a cell or tick for exact numbers.")
 
 
 # ----------------------------------------------------------------------------------------------- lens 2

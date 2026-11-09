@@ -79,6 +79,27 @@ def latency_hist(h: pd.DataFrame, p95: float | None = None) -> alt.Chart:
     return _cfg(bars.properties(height=200))
 
 
+def route_distribution(buckets: pd.DataFrame, stats: pd.DataFrame) -> alt.Chart:
+    """One row per route (busiest first): a heat-strip of where its requests fall on a shared log-latency axis,
+    with the p50 and p95 marked as ticks. Dark cell = many requests in that latency bucket."""
+    if buckets.empty:
+        return _empty()
+    order = list(stats["route"])
+    y = alt.Y("route:N", sort=order, title=None, scale=alt.Scale(paddingInner=0.25))
+    x = alt.X("lo:Q", scale=alt.Scale(type="log"), title="latency (ms, log scale)", axis=alt.Axis(grid=False, tickCount=5, format="~s"))
+    heat = alt.Chart(buckets[buckets["requests"] > 0]).mark_rect(cornerRadius=2, color=GREY).encode(
+        x=x, x2="hi:Q", y=y,
+        opacity=alt.Opacity("share:Q", scale=alt.Scale(range=[0.18, 0.9], domain=[0, 0.5], clamp=True), legend=None),
+        tooltip=[alt.Tooltip("route:N"), alt.Tooltip("lo:Q", title="from ms"), alt.Tooltip("hi:Q", title="to ms"), "requests:Q",
+                 alt.Tooltip("share:Q", format=".0%", title="of route")])
+    long = stats.melt(["route", "requests"], ["p50", "p95"], var_name="q", value_name="ms")
+    marks = alt.Chart(long).mark_tick(thickness=4, size=30, cornerRadius=1).encode(
+        x=alt.X("ms:Q", scale=alt.Scale(type="log")), y=y,
+        color=alt.Color("q:N", scale=alt.Scale(domain=["p50", "p95"], range=[BLUE, ORANGE]), title=None),
+        tooltip=["route:N", "q:N", alt.Tooltip("ms:Q", format=".1f"), "requests:Q"])
+    return _cfg((heat + marks).properties(height=_step(40)))
+
+
 def category_bars(c: pd.DataFrame) -> alt.Chart:
     c = c[c["requests"] > 0]
     if c.empty:

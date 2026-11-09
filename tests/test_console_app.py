@@ -28,6 +28,7 @@ def test_server_page_renders_empty_then_with_data(tmp_path):
     at = AppTest.from_function(_server_script, args=(str(p),), default_timeout=60).run()
     assert not at.exception
     assert [m.label for m in at.metric][:3] == ["Requests", "Throughput", "Server errors"] and at.metric[0].value == "3"
+    assert any("Latency by route" in m.value for m in at.markdown)  # per-route distribution section is on the Pulse tab
 
 
 def _db_script():
