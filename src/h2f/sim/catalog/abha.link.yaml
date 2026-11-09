@@ -1,0 +1,11 @@
+id: abha.link
+form: abha.link
+title: Link or create ABHA (mother)
+purpose: Adds the mother's ABHA identifier to her RelatedPerson. Read-modify-write with If-Match, so a concurrent edit fails instead of being overwritten.
+roles: {Nurse: true, Doctor: true}
+needs_patient: true
+fields:
+  - {key: mode, label: Mode, type: single, required: true, options: [Link existing ABHA, Create new ABHA], default: Link existing ABHA}
+  - {key: abha_number, label: ABHA number, type: text, required: true, default: "91-1234-5678-9012", pattern: '^[0-9]{2}-[0-9]{4}-[0-9]{4}-[0-9]{4}$', pattern_msg: "Expected 14 digits as XX-XXXX-XXXX-XXXX (use fake numbers only)"}
+  - {key: abha_address, label: ABHA address, type: text, pattern: '^[a-z0-9._]+@abdm$', pattern_msg: "Expected name@abdm"}
+  - {key: verified, label: Verified with parent, type: single, required: true, options: ["Yes", "No"], default: "Yes"}

@@ -1,0 +1,27 @@
+id: patient.admit
+form: Form 1
+title: Register & admit baby
+purpose: Identity gate. Saving creates Patient (baby), RelatedPerson (mother), Encounter, birth Observations and the admitting Condition.
+roles: {Nurse: true, Doctor: false}   # catalog lists Doctor, but the Doctor role holds no patient.admit (spec flag)
+flag: "Spec flag: catalog lists Doctor for Form 1 but the Doctor role holds no patient.admit."
+needs_patient: false
+fields:
+  - {key: sex, section: Baby, label: Sex, type: single, required: true, options: [Male, Female, Ambiguous]}
+  - {key: baby_name, section: Baby, label: Baby name, type: text, required: true, default: "Baby of Asha Rao"}
+  - {key: birth_weight, section: Baby, label: Birth weight, type: number, unit: kg, min: 0.3, max: 7, required: true, default: 1.4}
+  - {key: dob, section: Baby, label: Date of birth, type: date, required: true}
+  - {key: tob, section: Baby, label: Time of birth, type: time}
+  - {key: place_of_birth, section: Baby, label: Place of birth, type: single, options: [Inborn, Outborn, Home, Other], assumed: "options not in the pasted spec"}
+  - {key: ga_weeks, section: Baby, label: Gestational age (weeks), type: number, integer: true, min: 22, max: 44, required: true, default: 32, assumed: "lower bound not in the pasted spec (upper 44 is)"}
+  - {key: ga_days, section: Baby, label: Plus extra days, type: number, integer: true, min: 0, max: 6, default: 0}
+  - {key: attending, section: Admission, label: Attending doctor, type: single, required: true, options_from: doctors, other: true}
+  - {key: doctor_name, section: Admission, label: Doctor name, type: text, required_if: {attending: Other}, show_if: {attending: Other}}
+  - {key: diagnosis, section: Admission, label: Admitting diagnosis, type: longtext, required: true, default: "Preterm, RDS"}
+  - {key: mother_name, section: Mother, label: Mother name, type: text, required: true, default: Asha Rao}
+  - {key: phone, section: Mother, label: Contact phone, type: text, required: true, default: "9876543210", pattern: '^(\+91)?[6-9][0-9]{9}$', pattern_msg: "Expected an Indian mobile number (10 digits, starts 6-9, optional +91)"}
+  - {key: mother_age, section: Mother, label: Mother age, type: number, unit: years, integer: true, min: 12, max: 55, assumed: "range not in the pasted spec"}
+  - {key: mother_uhid, section: Mother, label: Mother UHID / MR number, type: text}
+  - {key: blood_group, section: Mother, label: Blood group, type: single, options: ["-", "A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"], assumed: "paste showed only part of the list"}
+  - {key: address, section: Mother, label: Address, type: text}
+  - {key: abha_choice, section: ABHA, label: "Mother's ABHA", type: single, required: true, options: [Link existing ABHA, Skip for now], default: Skip for now}
+  - {key: abha_skip_reason, section: ABHA, label: Reason for skipping ABHA, type: text, show_if: {abha_choice: Skip for now}, required_if_policy: abha_required}

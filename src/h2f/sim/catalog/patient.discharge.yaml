@@ -1,0 +1,13 @@
+id: patient.discharge
+form: Form 16
+title: Discharge and outcome
+purpose: Closes the Encounter (finished) with a disposition. Form 16's fields were not in the pasted spec, so everything here is an assumed default.
+roles: {Nurse: false, Doctor: true}   # catalog lists In-Charge, but the role holds no patient.discharge (spec flag)
+flag: "Spec flag: catalog lists In-Charge for Form 16 but the role holds no patient.discharge."
+needs_patient: true
+fields:
+  - {key: outcome, label: Outcome, type: single, required: true, options: [Discharged home, Referred / transferred, LAMA, Death], default: Discharged home, assumed: "Form 16 not in paste"}
+  - {key: destination, label: Referred to, type: text, show_if: {outcome: Referred / transferred}, required_if: {outcome: Referred / transferred}}
+  - {key: discharge_weight, label: Discharge weight, type: number, unit: kg, min: 0.3, max: 9}
+  - {key: summary, label: Discharge summary, type: longtext, required: true, default: "Feeds established, weight gaining."}
+  - {key: follow_up, label: Follow-up plan, type: longtext}

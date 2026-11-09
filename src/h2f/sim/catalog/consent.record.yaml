@@ -1,0 +1,11 @@
+id: consent.record
+form: consent.record
+title: Record, update or withdraw parent consent
+purpose: Consent is versioned state, not a delete. Withdraw flips status; update revises in place (new version).
+roles: {Nurse: true, Doctor: true}
+needs_patient: true
+fields:
+  - {key: action, label: Action, type: single, required: true, options: [Record, Update, Withdraw], default: Record}
+  - {key: scope, label: Consent for, type: single, required: true, options: [Treatment & procedures, Data sharing (ABDM), Photography / teaching], assumed: "scopes are not in the pasted spec"}
+  - {key: given_by, label: Given by, type: single, required: true, options: [Mother, Father, Guardian], default: Mother, show_if: {action: [Record, Update]}}
+  - {key: note, label: Note, type: longtext}

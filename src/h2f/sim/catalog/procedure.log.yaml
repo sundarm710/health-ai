@@ -1,0 +1,42 @@
+id: procedure.log
+form: Form 2
+title: Procedure & insertion/removal bundle
+purpose: Logs a procedure plus its insertion bundle (CLABSI / VAP / CAUTI). Insertions stay in-progress until a removal closes them.
+roles: {Nurse: true, Doctor: true}
+needs_patient: true
+fields:
+  - {key: ptype, label: Procedure / device type, type: single, required: true, options: [Central line, Endotracheal intubation, Urinary catheter, Non-bundle procedure], default: Central line}
+  - {key: action, label: Action, type: single, required: true, options: [Insertion, Removal], default: Insertion}
+  # --- central line insertion (all required) ---
+  - {key: cl_device, section: Central line, label: Line type, type: single, options: [PICC, UVC, UAC, CVC], required_if: {ptype: Central line, action: Insertion}, show_if: {ptype: Central line}, assumed: "line type list from the form heading"}
+  - {key: cl_hand_hygiene, section: Central line, label: Hand hygiene before insertion, type: single, options: [Done, Not Done], required_if: {ptype: Central line, action: Insertion}, show_if: {ptype: Central line, action: Insertion}, default: Done}
+  - {key: cl_barrier, section: Central line, label: Maximal barrier precautions, type: single, options: [Done, Not Done], required_if: {ptype: Central line, action: Insertion}, show_if: {ptype: Central line, action: Insertion}, default: Done}
+  - {key: cl_antiseptic, section: Central line, label: Skin antisepsis agent, type: single, options: [CHG 2%, Povidone iodine 10%, Other], required_if: {ptype: Central line, action: Insertion}, show_if: {ptype: Central line, action: Insertion}, default: CHG 2%, assumed: "third option truncated in paste"}
+  - {key: cl_dry, section: Central line, label: Antiseptic allowed to dry before puncture, type: single, options: ["Yes", "No"], required_if: {ptype: Central line, action: Insertion}, show_if: {ptype: Central line, action: Insertion}, default: "Yes"}
+  - {key: cl_sterile_field, section: Central line, label: Sterile field maintained throughout, type: single, options: ["Yes", No - breach], required_if: {ptype: Central line, action: Insertion}, show_if: {ptype: Central line, action: Insertion}, default: "Yes"}
+  - {key: cl_drape, section: Central line, label: Sterile drape covered full patient, type: single, options: ["Yes", "No"], required_if: {ptype: Central line, action: Insertion}, show_if: {ptype: Central line, action: Insertion}, default: "Yes"}
+  - {key: cl_site, section: Central line, label: Insertion site, type: single, options: [Upper limb, Lower limb, Scalp, Umbilical], required_if: {ptype: Central line, action: Insertion}, show_if: {ptype: Central line, action: Insertion}, default: Upper limb, assumed: "list truncated in paste"}
+  - {key: cl_tip, section: Central line, label: Tip position confirmed, type: single, options: [X-ray done, Clinical, X-ray pending], required_if: {ptype: Central line, action: Insertion}, show_if: {ptype: Central line, action: Insertion}, default: X-ray done, assumed: "list truncated in paste"}
+  - {key: cl_attempts, section: Central line, label: Number of attempts, type: number, integer: true, min: 1, max: 10, required_if: {ptype: Central line, action: Insertion}, show_if: {ptype: Central line, action: Insertion}, default: 1}
+  # --- ETT (all optional) ---
+  - {key: ett_hand_hygiene, section: Intubation, label: Hand hygiene before intubation, type: single, options: [Done, Not Done], show_if: {ptype: Endotracheal intubation, action: Insertion}}
+  - {key: ett_gloves, section: Intubation, label: Sterile gloves used, type: single, options: ["Yes", "No"], show_if: {ptype: Endotracheal intubation, action: Insertion}}
+  - {key: ett_size, section: Intubation, label: ETT size, type: number, unit: mm, min: 2, max: 4.5, show_if: {ptype: Endotracheal intubation, action: Insertion}, assumed: "range not in paste"}
+  - {key: ett_type, section: Intubation, label: ETT type, type: single, options: [Oral, Nasal], show_if: {ptype: Endotracheal intubation, action: Insertion}}
+  - {key: ett_depth, section: Intubation, label: Depth at lip/nare, type: number, unit: cm, min: 4, max: 12, show_if: {ptype: Endotracheal intubation, action: Insertion}, assumed: "range not in paste"}
+  - {key: ett_secured, section: Intubation, label: ETT secured immediately, type: single, options: ["Yes", "No"], show_if: {ptype: Endotracheal intubation, action: Insertion}}
+  - {key: ett_attempts, section: Intubation, label: Number of attempts, type: number, integer: true, min: 1, max: 10, show_if: {ptype: Endotracheal intubation, action: Insertion}}
+  # --- urinary catheter (all optional) ---
+  - {key: uc_asepsis, section: Urinary catheter, label: "Hand hygiene, sterile gloves, sterile drape", type: single, options: [Done, Partial, Not done], show_if: {ptype: Urinary catheter, action: Insertion}}
+  - {key: uc_size, section: Urinary catheter, label: Catheter size, type: number, unit: Fr, min: 3, max: 8, show_if: {ptype: Urinary catheter, action: Insertion}, assumed: "range not in paste"}
+  - {key: uc_indication, section: Urinary catheter, label: Indication, type: single, options: [Strict fluid balance, Post-surgery, Urological obstruction, Other], show_if: {ptype: Urinary catheter, action: Insertion}, assumed: "list truncated in paste"}
+  # --- non-bundle (optional) ---
+  - {key: nb_procedure, section: Procedure, label: Procedure, type: single, options: [LP, Chest drain, Exchange transfusion, Surfactant, ETT re-intubation, Suprapubic aspiration, Intraosseous], show_if: {ptype: Non-bundle procedure}, assumed: "list truncated in paste"}
+  - {key: nb_operator, section: Procedure, label: Operator, type: text, show_if: {ptype: Non-bundle procedure}}
+  - {key: nb_indication, section: Procedure, label: Indication, type: text, show_if: {ptype: Non-bundle procedure}}
+  - {key: nb_outcome, section: Procedure, label: Outcome, type: single, options: [Uncomplicated, Complication - incident filed], show_if: {ptype: Non-bundle procedure}}
+  # --- removal (any device) ---
+  - {key: rm_reason, section: Removal, label: Reason for removal, type: single, options: [No longer indicated, End of therapy, Infection suspected, Accidentally dislodged], required_if: {action: Removal}, show_if: {action: Removal}, assumed: "list truncated in paste"}
+  - {key: rm_complication, section: Removal, label: Complication on removal, type: single, options: [None, Bleeding, Infection, Other], required_if: {action: Removal}, show_if: {action: Removal}, default: None, assumed: "list truncated in paste"}
+  - {key: rm_culture, section: Removal, label: Tip / device sent for culture, type: single, options: ["Yes", "No", N/A], show_if: {action: Removal}}
+  - {key: rm_note, section: Removal, label: Note, type: longtext, show_if: {action: Removal}}

@@ -1,0 +1,10 @@
+id: anthro.record
+form: Form 19
+title: Anthropometry (weight, length, head circumference)
+purpose: Each measurement becomes its own vital-signs Observation linked to the Encounter.
+roles: {Nurse: true, Doctor: true}
+needs_patient: true
+fields:
+  - {key: weight, label: Weight, type: number, unit: kg, min: 0.3, max: 9, default: 1.38}
+  - {key: length, label: Length, type: number, unit: cm, min: 20, max: 70}
+  - {key: ofc, label: Head circumference (OFC), type: number, unit: cm, min: 15, max: 50}
