@@ -78,11 +78,12 @@ live = pytest.mark.skipif(not _live(), reason="HAPI not running (make up)")
 
 
 @live
-def test_round_trip_idempotent_create_versions_and_optimistic_locking():
+def test_round_trip_idempotent_create_versions_and_optimistic_locking(live_cleanup):
     import uuid
     c = FhirClient()
     mrn = f"TEST-{uuid.uuid4().hex[:8]}"
     first = c.create_patient("Test", "Pat", "2000-01-01", "other", mrn=mrn)
+    live_cleanup(first.id)
     again = c.create_patient("Test", "Pat", "2000-01-01", "other", mrn=mrn)
     assert (first.status, again.status) == (201, 200) and first.id == again.id
 

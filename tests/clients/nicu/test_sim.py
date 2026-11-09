@@ -4,6 +4,7 @@ Unit tests use a FakeState (no network). The live test needs `make up && make si
 """
 
 import json
+import re
 import uuid
 from datetime import datetime
 
@@ -366,7 +367,7 @@ def _live() -> bool:
 
 
 @pytest.mark.skipif(not _live(), reason="HAPI not running or not seeded (make up && make sim-seed)")
-def test_live_admit_is_atomic_and_a_retry_creates_nothing_new():
+def test_live_admit_is_atomic_and_a_retry_creates_nothing_new(live_cleanup):
     from fastapi.testclient import TestClient
 
     from fhirlab.clients.nicu.api import app
@@ -383,6 +384,9 @@ def test_live_admit_is_atomic_and_a_retry_creates_nothing_new():
     v = c.post("/validate", json=body, headers=H).json()
     assert v["ok"], v["issues"]
     first = c.post("/submit", json={**body, "validated_hash": v["payload_hash"]}, headers=H).json()
+    for r in first.get("results", []):  # register for deletion before any assertion can fail
+        if m := re.search(r"(?:^|/)Patient/([^/]+)", r["location"]):  # relative ("Patient/1/_history/1") or absolute URL
+            live_cleanup(m.group(1))
     assert first["submitted"] and all(r["status"].startswith("201") for r in first["results"])
     retry = c.post("/submit", json={**body, "validated_hash": v["payload_hash"]}, headers=H).json()
     assert retry["submitted"] and all(r["status"].startswith("200") for r in retry["results"])
