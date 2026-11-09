@@ -7,11 +7,11 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
-from h2f.client import FhirClient
-from h2f.obs import JsonlLogStore, JsonlSink, RequestLogMiddleware, annotate
-from h2f.obs import analytics as an
-from h2f.obs.middleware import current_request_id, record_upstream
-from h2f.obs.record import categorize, classify_upstream
+from fhirlab.client import FhirClient
+from fhirlab.obs import JsonlLogStore, JsonlSink, RequestLogMiddleware, annotate
+from fhirlab.obs import analytics as an
+from fhirlab.obs.middleware import current_request_id, record_upstream
+from fhirlab.obs.record import categorize, classify_upstream
 
 BASE = "http://fhir.test/fhir"
 

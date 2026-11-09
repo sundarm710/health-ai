@@ -10,12 +10,12 @@ from datetime import datetime
 import httpx
 import pytest
 
-from h2f.client import FhirClient
-from h2f.client.fhir_client import BASE
-from h2f.sim import auth
-from h2f.sim.catalog import load_catalog, parse_fields
-from h2f.sim.pipeline import IST, OpRequest, PayloadChanged, plan, submit
-from h2f.sim.state import State
+from fhirlab.client import FhirClient
+from fhirlab.client.fhir_client import BASE
+from fhirlab.sim import auth
+from fhirlab.sim.catalog import load_catalog, parse_fields
+from fhirlab.sim.pipeline import IST, OpRequest, PayloadChanged, plan, submit
+from fhirlab.sim.state import State
 
 NOW = datetime(2026, 11, 7, 12, 0, tzinfo=IST)
 NURSE = {"sub": "N1", "role": "Nurse", "name": "Nurse Test"}
@@ -302,13 +302,13 @@ def test_submit_does_not_send_when_the_plan_has_errors():
 
 # ------------------------------------------------------------------ UI gating (Streamlit AppTest, fake middleware)
 def _ui_script():
-    from h2f.ui import client as ui
-    from h2f.ui.client import client_page
+    from fhirlab.ui import client as ui
+    from fhirlab.ui.client import client_page
 
     def fake_call(self, method, path, **kw):
         from dataclasses import asdict as _asdict
 
-        from h2f.sim.catalog import load_catalog as _lc
+        from fhirlab.sim.catalog import load_catalog as _lc
 
         if path == "/catalog":
             ops = {}
@@ -369,7 +369,7 @@ def _live() -> bool:
 def test_live_admit_is_atomic_and_a_retry_creates_nothing_new():
     from fastapi.testclient import TestClient
 
-    from h2f.sim.api import app
+    from fhirlab.sim.api import app
 
     c = TestClient(app)
     pr = {p["name"]: p for p in c.get("/practitioners").json()}
@@ -392,7 +392,7 @@ def test_live_admit_is_atomic_and_a_retry_creates_nothing_new():
 
 
 def test_ui_required_marker_follows_the_servers_rules():
-    from h2f.ui.client import is_required
+    from fhirlab.ui.client import is_required
 
     f = {"required": False, "required_if": None, "required_if_policy": "abha_required"}
     assert is_required(f, {}, {"abha_required": True}) and not is_required(f, {}, {"abha_required": False}) and not is_required(f, {}, {})

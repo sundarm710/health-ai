@@ -5,7 +5,7 @@
 
 import streamlit as st
 
-from h2f.review.ui import page_insights, page_review, page_trends, results, sidebar
+from fhirlab.review.ui import page_insights, page_review, page_trends, results, sidebar
 
 st.set_page_config(page_title="HL7→FHIR Review", page_icon=":material/rate_review:", layout="wide")
 

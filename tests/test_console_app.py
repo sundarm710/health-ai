@@ -5,13 +5,13 @@ import json
 import pandas as pd
 from streamlit.testing.v1 import AppTest
 
-from h2f.obs import JsonlSink
-from h2f.obs.record import RequestLog, Upstream
+from fhirlab.obs import JsonlSink
+from fhirlab.obs.record import RequestLog, Upstream
 
 
 def _server_script(path):
-    from h2f.obs import JsonlLogStore
-    from h2f.ui.server import server_page
+    from fhirlab.obs import JsonlLogStore
+    from fhirlab.ui.server import server_page
 
     server_page(JsonlLogStore(path), middleware_url="http://x", hapi_url="http://y")
 
@@ -32,8 +32,8 @@ def test_server_page_renders_empty_then_with_data(tmp_path):
 
 
 def _db_script():
-    from h2f.dbview.repo import PgRepo
-    from h2f.ui.database import database_page
+    from fhirlab.dbview.repo import PgRepo
+    from fhirlab.ui.database import database_page
 
     database_page(PgRepo())
 

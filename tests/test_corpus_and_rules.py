@@ -3,11 +3,11 @@ from pathlib import Path
 
 import pytest
 
-from h2f.corpus.corrupt import corrupt
-from h2f.eval.score import score
-from h2f.parse.parser import parse
-from h2f.rules.mapper import map_message
-from h2f.v2 import components, escape, fhir_to_v2_ts, unescape, v2_ts_to_fhir
+from fhirlab.corpus.corrupt import corrupt
+from fhirlab.eval.score import score
+from fhirlab.parse.parser import parse
+from fhirlab.rules.mapper import map_message
+from fhirlab.v2 import components, escape, fhir_to_v2_ts, unescape, v2_ts_to_fhir
 
 CORPUS = Path("data/corpus")
 needs_corpus = pytest.mark.skipif(not (CORPUS / "index.parquet").exists(), reason="run `make corpus` first")
@@ -97,7 +97,7 @@ def test_rules_flags_local_code_but_stays_valid_shape():
 
 @needs_corpus
 def test_diff_rows_reconcile_with_score():
-    from h2f.eval.score import diff
+    from fhirlab.eval.score import diff
 
     for mid in _sample_ids(15):
         gold = json.loads((CORPUS / "golden" / f"{mid}.json").read_text())

@@ -19,7 +19,7 @@
 | `ui/charts.py` | Altair (= Vega-Lite JSON) | data access |
 | `ui/{client,server,database}.py` | Streamlit + one service layer | each other |
 
-**Moving off Streamlit:** a React app calls `/ops/*` (mounted on the middleware) and `dbview.api` (`uvicorn h2f.dbview.api:app --port 8001`),
+**Moving off Streamlit:** a React app calls `/ops/*` (mounted on the middleware) and `dbview.api` (`uvicorn fhirlab.dbview.api:app --port 8001`),
 and renders `chart.to_dict()` specs with `react-vega`, or its own charts from the JSON.
 **Swapping a backend:** implement `LogStore` (Loki, Elastic, SQLite) or `DbRepo`; nothing above changes.
 

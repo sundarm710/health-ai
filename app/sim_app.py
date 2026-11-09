@@ -1,18 +1,18 @@
 """Console for the NICU FHIR simulation.  Run: `make sim`  (or `uv run streamlit run app/sim_app.py --server.port 8502`)
 
 This file is only the shell: it wires concrete adapters to three independent pages and owns navigation.
-Each page can be lifted out (or replaced by a React app talking to h2f.obs.api / h2f.dbview.api) without touching the others.
+Each page can be lifted out (or replaced by a React app talking to fhirlab.obs.api / fhirlab.dbview.api) without touching the others.
 """
 
 import os
 
 import streamlit as st
 
-from h2f.dbview import PgRepo
-from h2f.obs import JsonlLogStore
-from h2f.ui.client import API, client_page
-from h2f.ui.database import database_page
-from h2f.ui.server import server_page
+from fhirlab.dbview import PgRepo
+from fhirlab.obs import JsonlLogStore
+from fhirlab.ui.client import API, client_page
+from fhirlab.ui.database import database_page
+from fhirlab.ui.server import server_page
 
 st.set_page_config(layout="wide", page_title="NICU FHIR console", page_icon=":material/child_care:")
 

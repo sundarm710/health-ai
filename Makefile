@@ -18,16 +18,16 @@ db-ui:     ## open the visual DB browser (login pre-filled; password is `hapi`)
 	open "http://localhost:8081/?pgsql=db&username=hapi&db=hapi&ns=public"
 
 sim-seed:  ## seed 1 hospital + 2 doctors + 2 nurses into HAPI (idempotent; needs `make up`)
-	uv run python -m h2f.sim.seed
+	uv run python -m fhirlab.sim.seed
 
 sim-api:   ## NICU middleware (FastAPI) on :8000, docs at /docs  [terminal 1]
-	uv run uvicorn h2f.sim.api:app --port 8000 --reload
+	uv run uvicorn fhirlab.sim.api:app --port 8000 --reload
 
 sim:       ## console (Client · Server · Database pages) on :8502; needs sim-api running  [terminal 2]
 	uv run streamlit run app/sim_app.py --server.port 8502
 
 demo:      ## narrated tour of every FHIR REST interaction (needs `make up`)
-	uv run python -m h2f.client demo
+	uv run python -m fhirlab.client demo
 
 synthea:   ## 500 patients, seed 42 -> data/synthea/fhir
 	$(JAVA) -jar tools/synthea-with-dependencies.jar -p 500 -s 42 -cs 42 \
@@ -37,13 +37,13 @@ synthea:   ## 500 patients, seed 42 -> data/synthea/fhir
 	  --generate.only_alive_patients=true Massachusetts
 
 corpus:    ## facts -> clean v2 + golden -> 5 corruption levels
-	uv run python -m h2f.corpus.build
+	uv run python -m fhirlab.corpus.build
 
 baseline:  ## rules-only over dev+test, all levels
-	uv run python -m h2f.eval.run --config rules_only
+	uv run python -m fhirlab.eval.run --config rules_only
 
 charts:
-	uv run python -m h2f.eval.charts
+	uv run python -m fhirlab.eval.charts
 
 test:
 	uv run pytest -q

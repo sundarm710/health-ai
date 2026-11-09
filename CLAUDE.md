@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 HL7v2→FHIR mapping pipeline + a NICU simulation on a local HAPI FHIR server (Postgres-backed). Synthetic data only. Python 3.12, `uv`, pytest, Streamlit, FastAPI.
-The learning goal: depth goes into the **agentic layer** (`src/h2f/agents/`: mapper, repair, terminology, reconciler, evals). Corpus/rules/UI scaffolding should be built quickly and kept simple.
+The learning goal: depth goes into the **agentic layer** (`src/fhirlab/agents/`: mapper, repair, terminology, reconciler, evals). Corpus/rules/UI scaffolding should be built quickly and kept simple.
 
 ## Commands
 ```
@@ -38,7 +38,7 @@ Dependencies point **down** only: `ui` → `service/analytics` → `repo/store` 
 - Business rules live in **data** (`sim/catalog/*.yaml`, `rules/templates/*.yaml`, `UNIT_POLICY`), not scattered in UI code. If the UI needs a rule, the server sends it (see how `unit_policy` reaches the form's `*` markers); do not copy the rule.
 
 ## Keep the repo convergent
-- **One way to do each thing.** FHIR calls go through `FhirClient`; charts through `ui/charts.py`; forms through the catalog; logging through `h2f.obs`. Before adding a helper, dependency or pattern, search for the existing one and extend it.
+- **One way to do each thing.** FHIR calls go through `FhirClient`; charts through `ui/charts.py`; forms through the catalog; logging through `fhirlab.obs`. Before adding a helper, dependency or pattern, search for the existing one and extend it.
 - **Single source of truth.** If two places must agree, one derives from the other (or tests assert they match). Duplicated constants/logic drift.
 - **Delete what you supersede** in the same change (old code path, stale doc line, dead test). No `_v2`, no parallel implementations, no commented-out code.
 - **Reuse before create.** New module only when a new *layer or concern* appears; otherwise add to the module that owns it. Match existing naming and style.
@@ -62,7 +62,7 @@ Dependencies point **down** only: `ui` → `service/analytics` → `repo/store` 
 - DB timestamps are **UTC, naive**. Convert to IST (`Asia/Kolkata`) only at display time, in the UI layer.
 - Names are denormalised: a patient's name also lives in `Encounter.subject.display` and `RelatedPerson.patient.display`. Update all three in one transaction (the baby dropdown reads the Encounter).
 - Fixing existing FHIR data = FHIR `PUT` + `If-Match` in a transaction (creates a version, keeps history). **Never `UPDATE` HAPI tables with SQL.**
-- Streamlit: `st.set_page_config` once, in the entrypoint. Test pages with `AppTest.from_function`; give widgets stable `key=`s. Test data must not leak into real logs (`tests/conftest.py` redirects `H2F_LOG_PATH`).
+- Streamlit: `st.set_page_config` once, in the entrypoint. Test pages with `AppTest.from_function`; give widgets stable `key=`s. Test data must not leak into real logs (`tests/conftest.py` redirects `FHIRLAB_LOG_PATH`).
 - Altair 6: no nested `alt.condition`; compute a column and use a scale. Never dual-axis charts; fixed-pixel row heights (`_step`) for category charts; categorical colours in fixed order, status red/amber reserved for failure.
 - pandas 3: `None` in object columns becomes `NaN`: test with `isinstance(x, str)`, not truthiness.
 - Java for Synthea: `/opt/homebrew/opt/openjdk@17/bin/java` (brew formula; the cask needs sudo).

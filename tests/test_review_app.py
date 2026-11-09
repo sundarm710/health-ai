@@ -12,7 +12,7 @@ def _page(name: str):
     def script(page_name: str, db: str):
         import streamlit as st
 
-        from h2f.review import store, ui
+        from fhirlab.review import store, ui
 
         store.DB = __import__("pathlib").Path(db)
         st.session_state.reviewer = "tester"
@@ -28,7 +28,7 @@ def _run(page: str, db: Path) -> AppTest:
 
 
 def test_pages_render_and_annotations_flow(tmp_path):
-    from h2f.review import data, store
+    from fhirlab.review import data, store
 
     db = tmp_path / "ann.sqlite"
     at = _run("page_review", db)

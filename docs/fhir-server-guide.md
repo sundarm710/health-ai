@@ -2,11 +2,11 @@
 
 ```
  you ──HTTP/JSON──▶  HAPI FHIR server (:8080/fhir)  ──JDBC──▶  Postgres (:5432)
- curl / h2f.client     REST API, search, validation          stores resources + search indexes
+ curl / fhirlab.client     REST API, search, validation          stores resources + search indexes
 ```
 
 HAPI *is* the FHIR server: it implements the FHIR REST API and persists to Postgres through
-its JPA layer. `src/h2f/client/` is a small Python client; `make demo` runs all of it.
+its JPA layer. `src/fhirlab/client/` is a small Python client; `make demo` runs all of it.
 
 ```bash
 make up      # Postgres + HAPI, waits until ready (first start ~1 min)
@@ -18,7 +18,7 @@ make down    # stop, keep data      make reset   # stop and wipe data
 ## 1. Interactions, with curl first and Python second
 
 Do each in curl so you see the raw protocol, then read the matching client method in
-`src/h2f/client/fhir_client.py`. Add `--trace` to any CLI command to print the HTTP calls.
+`src/fhirlab/client/fhir_client.py`. Add `--trace` to any CLI command to print the HTTP calls.
 
 | Goal | HTTP | Client method |
 |---|---|---|
@@ -40,11 +40,11 @@ curl -s -X POST localhost:8080/fhir/Patient -H 'Content-Type: application/fhir+j
 Then from the CLI:
 
 ```bash
-uv run python -m h2f.client --trace create-patient --family Iyer --given Meena --birth-date 1975-02-03 --gender female --mrn A100
-uv run python -m h2f.client add-obs <id> 29463-7 58.2 --effective 2026-11-05T09:00:00+05:30
-uv run python -m h2f.client summary <id>
-uv run python -m h2f.client search Patient family=Iyer
-uv run python -m h2f.client history Patient <id>
+uv run python -m fhirlab.client --trace create-patient --family Iyer --given Meena --birth-date 1975-02-03 --gender female --mrn A100
+uv run python -m fhirlab.client add-obs <id> 29463-7 58.2 --effective 2026-11-05T09:00:00+05:30
+uv run python -m fhirlab.client summary <id>
+uv run python -m fhirlab.client search Patient family=Iyer
+uv run python -m fhirlab.client history Patient <id>
 ```
 
 ## 2. Concepts to notice (each is visible in the demo output)
@@ -109,8 +109,8 @@ PUT? On a DELETE? Which index rows appear when you add an Observation?
 
 ## 5. Where this connects to the HL7v2 project
 
-`h2f.validate.hapi` already calls this server's `$validate`. The rules mapper emits
-transaction Bundles with conditional creates (`h2f.fhir.transaction`), which is exactly step 1's
+`fhirlab.validate.hapi` already calls this server's `$validate`. The rules mapper emits
+transaction Bundles with conditional creates (`fhirlab.fhir.transaction`), which is exactly step 1's
 `If-None-Exist` mechanism applied to many resources in one atomic POST to `/fhir`.
 Posting one of those Bundles and watching the rows appear in Postgres is a good next experiment.
 

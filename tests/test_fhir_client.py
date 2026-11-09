@@ -4,9 +4,9 @@
 import httpx
 import pytest
 
-from h2f.client import FhirClient, FhirError
-from h2f.client.fhir_client import BASE
-from h2f.fhir import MRN_SYSTEM
+from fhirlab.client import FhirClient, FhirError
+from fhirlab.client.fhir_client import BASE
+from fhirlab.fhir import MRN_SYSTEM
 
 
 def _client(handler) -> FhirClient:

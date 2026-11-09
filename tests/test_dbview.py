@@ -5,8 +5,8 @@ import json
 import pandas as pd
 import pytest
 
-from h2f.dbview import PgRepo, UnsafeSql, service
-from h2f.dbview.repo import check_safe, table_kind
+from fhirlab.dbview import PgRepo, UnsafeSql, service
+from fhirlab.dbview.repo import check_safe, table_kind
 
 
 def _obs(v):

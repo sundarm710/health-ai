@@ -10,10 +10,10 @@ Two connected pieces of one project. Everything uses **synthetic data only**.
 
 ```
  Streamlit console ──HTTP──▶ FastAPI middleware ──HTTP──▶ HAPI FHIR ──SQL──▶ Postgres 17
- (Client page)               (h2f.sim.api)                 :8080              :5432
+ (Client page)               (fhirlab.sim.api)                 :8080              :5432
         │                          │ writes JSONL request log                      ▲
         ▼                          ▼                                               │
-   Server page  ◀── h2f.obs ◀── data/logs/middleware.jsonl        Database page ◀── h2f.dbview
+   Server page  ◀── fhirlab.obs ◀── data/logs/middleware.jsonl        Database page ◀── fhirlab.dbview
 ```
 
 ## Quick start
@@ -47,7 +47,7 @@ A request id ties it together: the Client trace shows it, the Server log records
 
 ## Layout
 ```
-src/h2f/
+src/fhirlab/
   corpus/ parse/ rules/ validate/ eval/ review/ pipeline.py   HL7v2→FHIR: corpus, tolerant parser, YAML rules, scoring, review store
   agents/                                                     the agentic layer (next)
   client/        FhirClient: the one thin FHIR REST client (+ CLI)
