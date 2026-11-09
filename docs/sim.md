@@ -61,7 +61,7 @@ make db-ui      # optional: look at the rows in Adminer
 
 ## Assumptions and simplifications
 * The pasted spec was truncated in places. Every field the repo had to fill is marked **ⓘ assumed default** in the UI
-  and `assumed:` in `src/fhirlab/sim/catalog/*.yaml`. **Form 16 (discharge) had no fields at all**; its form is invented.
+  and `assumed:` in `src/fhirlab/clients/nicu/catalog/*.yaml`. **Form 16 (discharge) had no fields at all**; its form is invented.
   Please review these with someone who knows neonatal practice.
 * Roles are Doctor and Nurse; Nurse takes the In-Charge column. Doctor can't admit; Nurse can't discharge.
 * Gestational age is stored as total days (UCUM `d`) under LOINC 18185-9. Mother's age and blood group are local
@@ -72,6 +72,6 @@ make db-ui      # optional: look at the rows in Adminer
   Adding an operation = a YAML file in `catalog/` + a mapper in `mapping.py` + checks in `checks.py`.
 
 ## Where the code is
-`src/fhirlab/sim/`: `catalog.py` (spec as data, field checks) · `checks.py` (clinical, state) · `mapping.py` (FHIR) ·
+`src/fhirlab/clients/nicu/`: `catalog.py` (spec as data, field checks) · `checks.py` (clinical, state) · `mapping.py` (FHIR) ·
 `pipeline.py` (stages, submit gate) · `auth.py` (tokens) · `state.py` (HAPI lookups) · `api.py` · `ui.py` · `seed.py`.
 Tests: `tests/test_sim.py` (unit tests need nothing running; the live test needs `make up && make sim-seed`).

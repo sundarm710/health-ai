@@ -3,7 +3,7 @@
 `make sim` → http://localhost:8502. Three pages, three independent modules.
 
 ```
- app/sim_app.py   (shell: wires adapters, owns navigation, nothing else)
+ app/console.py   (shell: wires adapters, owns navigation, nothing else)
    ├─ Client    ui/client.py    ──HTTP──▶ middleware (sim API)
    ├─ Server    ui/server.py    ──▶ obs.LogStore ─▶ obs.analytics ─▶ ui/charts.py
    └─ Database  ui/database.py  ──▶ dbview.DbRepo ─▶ dbview.service ─▶ ui/charts.py
@@ -19,7 +19,7 @@
 | `ui/charts.py` | Altair (= Vega-Lite JSON) | data access |
 | `ui/{client,server,database}.py` | Streamlit + one service layer | each other |
 
-**Moving off Streamlit:** a React app calls `/ops/*` (mounted on the middleware) and `dbview.api` (`uvicorn fhirlab.dbview.api:app --port 8001`),
+**Moving off Streamlit:** a React app calls `/ops/*` (mounted on the middleware) and `dbview.api` (`uvicorn fhirlab.core.db.api:app --port 8001`),
 and renders `chart.to_dict()` specs with `react-vega`, or its own charts from the JSON.
 **Swapping a backend:** implement `LogStore` (Loki, Elastic, SQLite) or `DbRepo`; nothing above changes.
 

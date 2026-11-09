@@ -10,10 +10,10 @@ Two connected pieces of one project. Everything uses **synthetic data only**.
 
 ```
  Streamlit console ──HTTP──▶ FastAPI middleware ──HTTP──▶ HAPI FHIR ──SQL──▶ Postgres 17
- (Client page)               (fhirlab.sim.api)                 :8080              :5432
+ (Client page)               (fhirlab.clients.nicu.api)                 :8080              :5432
         │                          │ writes JSONL request log                      ▲
         ▼                          ▼                                               │
-   Server page  ◀── fhirlab.obs ◀── data/logs/middleware.jsonl        Database page ◀── fhirlab.dbview
+   Server page  ◀── fhirlab.core.obs ◀── data/logs/middleware.jsonl        Database page ◀── fhirlab.core.db
 ```
 
 ## Quick start
