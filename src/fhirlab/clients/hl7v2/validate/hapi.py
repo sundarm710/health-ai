@@ -9,13 +9,13 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import httpx
 
-BASE = os.environ.get("HAPI_BASE", "http://localhost:8080/fhir")
+from fhirlab.core.client import FhirClient
+
 CACHE = Path(".cache/validate")
 
 
@@ -42,10 +42,7 @@ def validate(resource: dict, *, client: httpx.Client | None = None) -> list[Issu
     if cached.exists():
         issues = [Issue(**d) for d in json.loads(cached.read_text())]
     else:
-        rt = resource.get("resourceType", "Bundle")
-        c = client or httpx.Client(timeout=120)
-        r = c.post(f"{BASE}/{rt}/$validate", content=body, headers={"Content-Type": "application/fhir+json"})
-        issues = _issues(r.json())
+        issues = _issues({"issue": FhirClient(client=client or httpx.Client(timeout=120)).validate(resource)})  # the one HAPI client
         CACHE.mkdir(parents=True, exist_ok=True)
         cached.write_text(json.dumps([asdict(i) for i in issues]))
     return [i for i in issues if i.severity in ("error", "fatal")]
