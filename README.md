@@ -67,7 +67,7 @@ Dependencies only point at the core; `tests/test_architecture.py` fails the buil
 ## Docs
 - [`docs/core/fhir-server-guide.md`](docs/core/fhir-server-guide.md): FHIR REST interactions and HAPI/Postgres internals, with exercises.
 - [`docs/clients/nicu.md`](docs/clients/nicu.md): the NICU simulation: forms, rules, what each form becomes in FHIR.
-- [`docs/clients/hl7v2/summary.md`](docs/clients/hl7v2/summary.md): HL7v2 eval results for the rules-only baseline.
+- [`docs/clients/hl7v2/README.md`](docs/clients/hl7v2/README.md): the HL7v2 batch client: generator, injector, parser, rules, eval; baseline results ([`summary.md`](docs/clients/hl7v2/summary.md)).
 - [`docs/console.md`](docs/console.md): console architecture, swapping Streamlit for another front end, server logging best practices.
 
 Contributing (workflow, layering rules, commit discipline): see [`CLAUDE.md`](CLAUDE.md).

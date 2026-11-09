@@ -1,4 +1,4 @@
-"""Pages for the expert review app (entry point: app/review_app.py)."""
+"""Pages for the expert review app (entry point: app/hl7v2_review.py)."""
 
 from __future__ import annotations
 
