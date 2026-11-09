@@ -66,6 +66,7 @@ Within an area, dependencies point **down** only: `console/pages` → `service/a
 - DB timestamps are **UTC, naive**. Convert to IST (`Asia/Kolkata`) only at display time, in the UI layer.
 - Names are denormalised: a patient's name also lives in `Encounter.subject.display` and `RelatedPerson.patient.display`. Update all three in one transaction (the baby dropdown reads the Encounter).
 - Fixing existing FHIR data = FHIR `PUT` + `If-Match` in a transaction (creates a version, keeps history). **Never `UPDATE` HAPI tables with SQL.**
+- Streamlit reruns the whole page on every interaction: fetch reference data through `st.cache_data` (TTL + `.clear()` after writes) and run click actions as `on_click` callbacks, never `st.rerun()` after an API call. Measure with the request log.
 - Streamlit: `st.set_page_config` once, in the entrypoint. Test pages with `AppTest.from_function`; give widgets stable `key=`s. Test data must not leak into real logs (`tests/conftest.py` redirects `FHIRLAB_LOG_PATH`).
 - Altair 6: no nested `alt.condition`; compute a column and use a scale. Never dual-axis charts; fixed-pixel row heights (`_step`) for category charts; categorical colours in fixed order, status red/amber reserved for failure.
 - pandas 3: `None` in object columns becomes `NaN`: test with `isinstance(x, str)`, not truthiness.
