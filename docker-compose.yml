@@ -1,0 +1,59 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: hapi
+      POSTGRES_USER: hapi
+      POSTGRES_PASSWORD: hapi   # local dev only
+    ports:
+      - "5432:5432"             # so you can `make psql` / inspect tables from the host
+    volumes:
+      - pgdata:/var/lib/postgresql/data   # data survives `docker compose down` (not `down -v`)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hapi -d hapi"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  hapi:
+    image: hapiproject/hapi:v8.12.0-2
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      # --- storage: HAPI's JPA layer persists every resource to Postgres ---
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/hapi
+      SPRING_DATASOURCE_USERNAME: hapi
+      SPRING_DATASOURCE_PASSWORD: hapi
+      SPRING_DATASOURCE_DRIVERCLASSNAME: org.postgresql.Driver
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgresDialect
+      # --- FHIR behaviour ---
+      hapi.fhir.fhir_version: R4
+      # "false": writes are NOT auto-validated (fast, lenient). The explicit
+      # POST /<Type>/$validate operation works regardless. Set "true" to make HAPI
+      # reject invalid resources on create/update with a 422 OperationOutcome.
+      hapi.fhir.validation.requests_enabled: "false"
+      hapi.fhir.allow_external_references: "true"
+      # Enables the async bulk `$export` operation (NDJSON files). Off by default in HAPI.
+      hapi.fhir.bulk_export_enabled: "true"
+      # Persist the caller's X-Request-ID (and meta.source) on every stored version -> hfj_res_ver.request_id.
+      # The middleware forwards its own request id, so any DB row can be traced back to the log line that wrote it.
+      hapi.fhir.store_meta_source_information: SOURCE_URI_AND_REQUEST_ID
+    # No healthcheck: the HAPI image is distroless (no curl/sh). `make up` polls /fhir/metadata from the host.
+
+  # Visual DB browser: http://localhost:8081  (`make db-ui` opens it pre-filled)
+  # Click a table to see rows; click "Select data" / foreign-key links to follow references.
+  adminer:
+    image: adminer:5
+    depends_on:
+      - db
+    ports:
+      - "8081:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: db     # the Postgres container's service name
+      ADMINER_DESIGN: pepa-linha     # cleaner theme (bundled with the image)
+
+volumes:
+  pgdata:
