@@ -60,6 +60,60 @@ def _api() -> Api:
     return Api(st.session_state.get("api_base", API), st.session_state.get("token"), st.session_state.setdefault("hops", []))
 
 
+# --------------------------------------------------------------------------- reference data (cached)
+# Streamlit re-runs this whole script on every click or keystroke. Anything fetched at the top of the page is therefore fetched on
+# every interaction. Reference data is cached per middleware URL; only a failed fetch is retried (exceptions are never cached).
+def _fetch(base: str, path: str):
+    code, data = Api(base).call("GET", path)
+    if code != 200:
+        raise RuntimeError(f"{path} -> HTTP {code}")
+    return data
+
+
+@st.cache_data(ttl=300, show_spinner=False)  # forms and permissions: change only on deploy
+def _catalog(base: str) -> dict:
+    return _fetch(base, "/catalog")
+
+
+@st.cache_data(ttl=300, show_spinner=False)  # staff roster: changes only when someone re-seeds
+def _practitioners(base: str) -> list:
+    return _fetch(base, "/practitioners")
+
+
+@st.cache_data(ttl=10, show_spinner=False)  # active babies: changes on admit/discharge, so short TTL + cleared after a submit
+def _patients(base: str) -> list:
+    return _fetch(base, "/patients")
+
+
+def _reload() -> None:
+    """Refresh button: drop every cached lookup so the next run asks the middleware again."""
+    _catalog.clear()
+    _practitioners.clear()
+    _patients.clear()
+
+
+# --------------------------------------------------------------------------- button actions
+# Run as on_click callbacks, i.e. BEFORE the single rerun that follows a click. The page then renders the new state once,
+# instead of rendering, handling the click, and calling st.rerun() (which executed the whole page a second time).
+def _validate(body: dict, sig: str) -> None:
+    ss = st.session_state
+    ss.hops, ss.result = [], None
+    code, resp = _api().call("POST", "/validate", json=body)
+    ok = resp if code == 200 else {"issues": [{"severity": "error", "stage": "http", "path": str(code), "message": str(resp)}], "stages": {}}
+    ss.last = {"resp": ok, "sig": sig}
+
+
+def _submit(body: dict, op_id: str) -> None:
+    ss = st.session_state
+    ss.hops = []
+    code, resp = _api().call("POST", "/submit", json={**body, "validated_hash": ss.last["resp"]["payload_hash"]})
+    ss.result = {"code": code, "resp": resp}
+    if resp.get("submitted"):
+        ss[f"idem:{op_id}"] = str(uuid.uuid4())  # a new submission needs a new idempotency key
+        ss.last = None
+        _patients.clear()  # the set of active babies just changed
+
+
 # --------------------------------------------------------------------------- form rendering
 def is_required(f: dict, values: dict, policy: dict) -> bool:
     """Mirror of the server's rule (catalog.is_required), so the * on a label is true *right now*, not just sometimes."""
@@ -170,11 +224,9 @@ def client_page() -> None:
         ss.api_base = st.text_input("Middleware URL", ss.get("api_base", API))
     api = _api()
     try:
-        code, cat = api.call("GET", "/catalog")
-        _, pracs = api.call("GET", "/practitioners")
-        _, babies = api.call("GET", "/patients")
-        ok = code == 200
-    except httpx.HTTPError:
+        cat, pracs, babies = _catalog(ss.api_base), _practitioners(ss.api_base), _patients(ss.api_base)
+        ok = True
+    except (httpx.HTTPError, RuntimeError):
         ok = False
     if not ok:
         st.error(f"Cannot reach the middleware at {ss.api_base}. Run `make up`, `make sim-seed`, then `make sim-api`.")
@@ -207,7 +259,7 @@ def client_page() -> None:
         else:
             pat = None
             d2.caption("No baby needed: this operation creates the patient.")
-        d3.button("Refresh", icon=":material/refresh:", on_click=st.cache_data.clear, help="Reload the patient list")
+        d3.button("Refresh", icon=":material/refresh:", on_click=_reload, help="Reload staff, forms and the patient list")
         if ss.get("token"):
             with st.expander("Token (what the middleware trusts)"):
                 st.caption("Signed claims. The form never sends a role; the server reads it from here.")
@@ -215,7 +267,6 @@ def client_page() -> None:
     if not ss.get("token"):
         st.warning("Choose a practitioner above to sign in.")
         return
-    api.token = ss.token
     st.caption(op["purpose"])
     if op.get("flag"):
         st.info(op["flag"])
@@ -238,21 +289,9 @@ def client_page() -> None:
         last = ss.get("last")
         valid_now = bool(last and last["resp"].get("ok") and last["sig"] == sig)
         b1, b2 = st.columns(2)
-        if b1.button("Validate", type="primary", width="stretch"):
-            ss.hops, ss.result = [], None
-            api.hops = ss.hops
-            code, resp = api.call("POST", "/validate", json=body)
-            ss.last = {"resp": resp if code == 200 else {"issues": [{"severity": "error", "stage": "http", "path": str(code), "message": str(resp)}], "stages": {}}, "sig": sig}
-            st.rerun()
-        if b2.button("Submit", disabled=not valid_now, width="stretch", help="Enabled only when the current form passed validation unchanged."):
-            ss.hops = []
-            api.hops = ss.hops
-            code, resp = api.call("POST", "/submit", json={**body, "validated_hash": last["resp"]["payload_hash"]})
-            ss.result = {"code": code, "resp": resp}
-            if resp.get("submitted"):
-                ss[f"idem:{op_id}"] = str(uuid.uuid4())  # a new submission needs a new idempotency key
-                ss.last = None
-            st.rerun()
+        b1.button("Validate", type="primary", width="stretch", on_click=_validate, args=(body, sig))
+        b2.button("Submit", disabled=not valid_now, width="stretch", on_click=_submit, args=(body, op_id),
+                  help="Enabled only when the current form passed validation unchanged.")
         if last and last["sig"] != sig:
             st.caption("✏️ The form changed since the last validation. Validate again to enable Submit.")
         st.caption(f"idempotency key `{ss[f'idem:{op_id}'][:8]}…` · retrying a submit with the same key creates nothing twice")

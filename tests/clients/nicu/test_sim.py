@@ -309,6 +309,10 @@ def _ui_script():
     def fake_call(self, method, path, **kw):
         from dataclasses import asdict as _asdict
 
+        import streamlit as _st
+
+        _st.session_state.setdefault("_calls", []).append(f"{method} {path}")
+
         from fhirlab.clients.nicu.catalog import load_catalog as _lc
 
         if path == "/catalog":
@@ -403,3 +407,31 @@ def test_ui_required_marker_follows_the_servers_rules():
     g = {"required": False, "required_if": {"x": "y"}, "required_if_policy": None}
     assert is_required(g, {"x": "y"}, {}) and not is_required(g, {"x": "n"}, {})  # conditional: only starred while the condition holds
     assert is_required({"required": True}, {}, {})
+
+
+def test_ui_typing_in_the_form_does_not_call_the_middleware():
+    """Streamlit reruns the page on every interaction. Reference data (catalog, practitioners, patients) must be cached,
+    so editing a field costs zero calls and Validate costs exactly one (the validation itself)."""
+    import uuid as _uuid
+
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_function(_ui_script, default_timeout=60)
+    at.session_state["api_base"] = f"http://fake.test/{_uuid.uuid4().hex}"  # unique cache key: no leakage between tests
+    at.run()
+    calls = lambda: list(at.session_state["_calls"])  # noqa: E731
+    first = calls()
+    assert sorted(c for c in first if c.startswith("GET")) == ["GET /catalog", "GET /patients", "GET /practitioners"]
+
+    at.selectbox(key="op").set_value("anthro.record").run()
+    at.number_input(key="anthro.record:weight").set_value(1.3).run()
+    at.number_input(key="anthro.record:weight").set_value(1.4).run()
+    assert calls() == first, f"form interactions called the middleware: {calls()[len(first):]}"
+
+    n = len(calls())
+    next(b for b in at.button if b.label == "Validate").click().run()
+    assert calls()[n:] == ["POST /validate"]  # one validation: no reference refetch, no second full run
+
+    n = len(calls())
+    next(b for b in at.button if b.label == "Refresh").click().run()
+    assert sorted(calls()[n:]) == ["GET /catalog", "GET /patients", "GET /practitioners"]  # Refresh really reloads
