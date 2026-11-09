@@ -69,6 +69,7 @@ Dependencies only point at the core; `tests/test_architecture.py` fails the buil
 - [`docs/clients/nicu.md`](docs/clients/nicu.md): the NICU simulation: forms, rules, what each form becomes in FHIR.
 - [`docs/clients/hl7v2/README.md`](docs/clients/hl7v2/README.md): the HL7v2 batch client: generator, injector, parser, rules, eval; baseline results ([`summary.md`](docs/clients/hl7v2/summary.md)).
 - [`docs/tiered.md`](docs/tiered.md): every service explained three ways (ELI5 · newcomer · 20-year veteran): how it works, alternatives, known gaps, path to production.
+- [`docs/ideas.md`](docs/ideas.md): five production-level directions (AI/ML, product companies, hospitals) and how to choose between them.
 - [`docs/console.md`](docs/console.md): console architecture, swapping Streamlit for another front end, server logging best practices.
 
 Contributing (workflow, layering rules, commit discipline): see [`CLAUDE.md`](CLAUDE.md).
