@@ -45,25 +45,29 @@ Other targets: `down` · `reset` (deletes all FHIR data) · `demo` (narrated FHI
 
 A request id ties it together: the Client trace shows it, the Server log records it, and HAPI stores it on the rows it writes (`hfj_res_ver.request_id`).
 
-## Layout
+## Layout: one core, two clients, one frontend
 ```
 src/fhirlab/
-  corpus/ parse/ rules/ validate/ eval/ review/ pipeline.py   HL7v2→FHIR: corpus, tolerant parser, YAML rules, scoring, review store
-  agents/                                                     the agentic layer (next)
-  client/        FhirClient: the one thin FHIR REST client (+ CLI)
-  sim/           NICU middleware: catalog (YAML forms), authz, checks, mapping, pipeline, API
-  obs/           request logging middleware, LogStore, analytics, probes     (no UI)
-  dbview/        DbRepo (SQL), service (timelines, diffs)                    (no UI)
-  ui/            Streamlit renderers: client.py, server.py, database.py, charts.py
-app/             Streamlit entrypoints (thin shells that wire adapters to pages)
-tests/           pytest; live tests skip themselves when the stack is down
-docs/            console.md · sim.md · fhir-server-guide.md · summary.md
+  core/                    THE ENGINE: depends on nothing else here
+    fhir.py  client/       FHIR constants · FhirClient (the one way to call HAPI)
+    obs/  db/              request-log analytics & probes · read-only Postgres view   (no UI)
+  clients/                 programs that use the core; independent of each other
+    nicu/                  interactive NICU simulator: catalog (YAML forms), authz, checks, mapping, middleware API
+    hl7v2/                 batch client: messy / deliberately broken HL7v2 → FHIR
+      corpus/              Synthea generator + corruption injector     parse/ rules/ validate/   parser, YAML mapper, HAPI $validate
+      eval/ review/        scoring, expert annotation UI               agents/                   agent layer (parked, not started)
+  console/                 Streamlit frontend over core + nicu: pages/{client,server,database}.py, charts.py
+app/                       thin entrypoints: console.py (Client·Server·Database), hl7v2_review.py
+tests/                     mirrors the tree (core/, clients/{nicu,hl7v2}/, console/); test_architecture.py enforces the boundary
+docs/                      core/ · clients/{nicu.md, hl7v2/} · console.md
 ```
+The HL7v2 client is a *subset* of client work (bulk and batched, with bad messages mixed in), so it sits beside the NICU client, both on top of the core.
+Dependencies only point at the core; `tests/test_architecture.py` fails the build otherwise.
 
 ## Docs
-- [`docs/console.md`](docs/console.md): console architecture, how to swap Streamlit for another front end, server logging best practices.
-- [`docs/sim.md`](docs/sim.md): the NICU simulation: forms, rules, what each form becomes in FHIR.
-- [`docs/fhir-server-guide.md`](docs/fhir-server-guide.md): FHIR REST interactions and HAPI/Postgres internals, with exercises.
-- [`docs/summary.md`](docs/summary.md): eval results for the rules-only baseline.
+- [`docs/core/fhir-server-guide.md`](docs/core/fhir-server-guide.md): FHIR REST interactions and HAPI/Postgres internals, with exercises.
+- [`docs/clients/nicu.md`](docs/clients/nicu.md): the NICU simulation: forms, rules, what each form becomes in FHIR.
+- [`docs/clients/hl7v2/summary.md`](docs/clients/hl7v2/summary.md): HL7v2 eval results for the rules-only baseline.
+- [`docs/console.md`](docs/console.md): console architecture, swapping Streamlit for another front end, server logging best practices.
 
 Contributing (workflow, layering rules, commit discipline): see [`CLAUDE.md`](CLAUDE.md).

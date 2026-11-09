@@ -4,22 +4,22 @@
 
 ```
  app/console.py   (shell: wires adapters, owns navigation, nothing else)
-   ├─ Client    ui/client.py    ──HTTP──▶ middleware (sim API)
-   ├─ Server    ui/server.py    ──▶ obs.LogStore ─▶ obs.analytics ─▶ ui/charts.py
-   └─ Database  ui/database.py  ──▶ dbview.DbRepo ─▶ dbview.service ─▶ ui/charts.py
+   ├─ Client    console/pages/client.py    ──HTTP──▶ middleware (sim API)
+   ├─ Server    console/pages/server.py    ──▶ core.obs.LogStore ─▶ core.obs.analytics ─▶ console/charts.py
+   └─ Database  console/pages/database.py  ──▶ core.db.DbRepo ─▶ core.db.service ─▶ console/charts.py
 ```
 
 | Layer | Knows about | Does not know about |
 |---|---|---|
-| `obs/record.py` | the log contract | everything else |
-| `obs/middleware.py` | ASGI, contextvars | files, pandas, Streamlit |
-| `obs/store.py`, `dbview/repo.py` | files / SQL (the only I/O) | charts, Streamlit |
-| `obs/analytics.py`, `dbview/service.py` | pandas | I/O, Streamlit |
-| `obs/api.py`, `dbview/api.py` | FastAPI | Streamlit |
-| `ui/charts.py` | Altair (= Vega-Lite JSON) | data access |
-| `ui/{client,server,database}.py` | Streamlit + one service layer | each other |
+| `core/obs/record.py` | the log contract | everything else |
+| `core/obs/middleware.py` | ASGI, contextvars | files, pandas, Streamlit |
+| `core/obs/store.py`, `core/db/repo.py` | files / SQL (the only I/O) | charts, Streamlit |
+| `core/obs/analytics.py`, `core/db/service.py` | pandas | I/O, Streamlit |
+| `core/obs/api.py`, `core/db/api.py` | FastAPI | Streamlit |
+| `console/charts.py` | Altair (= Vega-Lite JSON) | data access |
+| `console/pages/*.py` | Streamlit + one service layer | each other |
 
-**Moving off Streamlit:** a React app calls `/ops/*` (mounted on the middleware) and `dbview.api` (`uvicorn fhirlab.core.db.api:app --port 8001`),
+**Moving off Streamlit:** a React app calls `/ops/*` (mounted on the middleware) and `core.db.api` (`uvicorn fhirlab.core.db.api:app --port 8001`),
 and renders `chart.to_dict()` specs with `react-vega`, or its own charts from the JSON.
 **Swapping a backend:** implement `LogStore` (Loki, Elastic, SQLite) or `DbRepo`; nothing above changes.
 

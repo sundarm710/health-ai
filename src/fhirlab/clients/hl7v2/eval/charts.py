@@ -15,7 +15,7 @@ import pandas as pd  # noqa: E402
 
 from fhirlab.clients.hl7v2.eval.score import prf  # noqa: E402
 
-RESULTS, DOCS = Path("results"), Path("docs")
+RESULTS, DOCS = Path("results"), Path("docs/clients/hl7v2")
 # Colour follows the config (fixed slot order), never its rank in a given chart.
 CONFIG_ORDER = ["rules_only", "llm_only", "rules_mapper", "rules_mapper_repair", "full"]
 PALETTE = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4"]

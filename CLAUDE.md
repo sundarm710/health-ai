@@ -6,7 +6,7 @@ The learning goal: depth goes into the **agentic layer** (`src/fhirlab/clients/h
 ## Commands
 ```
 uv run pytest -q                         # whole suite (~20 s). Run after EVERY build step
-uv run pytest tests/test_obs.py -q       # one file;  add ::test_name for one test
+uv run pytest tests/core/test_obs.py -q       # one file;  add ::test_name for one test
 make up | down | reset                   # Postgres + HAPI (reset DELETES all FHIR data: never run unasked)
 make sim-seed | sim-api | sim            # seed practitioners | middleware :8000 | console :8502
 make demo | psql | db-ui                 # FHIR tour | SQL shell | Adminer
@@ -21,28 +21,32 @@ Live tests (`-k live`, `TestLive`) skip themselves when HAPI/Postgres are down. 
 If a test fails, find the cause. Never weaken, skip or delete a test to get green. If you cannot verify something (no browser, stack down), say so in your report; do not imply it was checked.
 
 ## Separation of concerns (the layering is the architecture)
-Dependencies point **down** only: `ui` → `service/analytics` → `repo/store` (I/O) ← adapters. Never up, never sideways.
+Three areas under `src/fhirlab/`. **`core/` is the product**: the HAPI engine and its access layer. `clients/*` and `console/` are ancillary and depend on it, never the reverse.
+`clients/nicu` and `clients/hl7v2` never import each other; `console` may use `core` and `clients/nicu` only. `tests/test_architecture.py` enforces this: if it fails, move the code, do not edit the test.
+The HL7v2 client is a *subset of client work* (bulk, batched, some messages deliberately broken). Its agent layer (`clients/hl7v2/agents/`) is parked until asked for.
+Within an area, dependencies point **down** only: `console/pages` → `service/analytics` → `repo/store` (I/O). Never up, never sideways.
 
 | Layer | Owns | Must NOT import |
 |---|---|---|
-| `obs/record.py`, `dbview/service.py`, `obs/analytics.py` | contracts, pure transforms (pandas) | streamlit, httpx, psycopg, files |
-| `obs/store.py`, `dbview/repo.py`, `client/` | **all** I/O: files, SQL, HTTP to HAPI | streamlit, charts |
-| `obs/middleware.py`, `*/api.py` | ASGI/FastAPI glue | streamlit |
-| `ui/charts.py` | DataFrame → Altair spec | data access, streamlit |
-| `ui/client.py`, `ui/server.py`, `ui/database.py` | Streamlit rendering for **one** page | each other; raw SQL; file reads |
+| `core/obs/record.py`, `core/db/service.py`, `core/obs/analytics.py` | contracts, pure transforms (pandas) | streamlit, httpx, psycopg, files |
+| `core/obs/store.py`, `core/db/repo.py`, `core/client/` | **all** I/O: files, SQL, HTTP to HAPI | streamlit, charts |
+| `core/obs/middleware.py`, `*/api.py` | ASGI/FastAPI glue | streamlit |
+| `console/charts.py` | DataFrame → Altair spec | data access, streamlit |
+| `console/pages/*.py` | Streamlit rendering for **one** page | each other; raw SQL; file reads |
+| `clients/hl7v2/*` | batch HL7v2 work; reaches HAPI only via `core.client` | `clients.nicu`, `console` |
 | `app/*.py` | wiring only: build adapters, pass them to pages, navigation | logic |
 
 - Pages receive their data source as an argument (`server_page(store, …)`, `database_page(repo)`); they never construct it.
 - Ports are `Protocol`s (`LogStore`, `DbRepo`). Fakes in tests implement the same Protocol.
 - The **middleware is the only writer** to HAPI, through one transaction Bundle with `ifMatch`/`ifNoneExist`. The DB layer is read-only (session read-only, SELECT-only guard).
-- Business rules live in **data** (`sim/catalog/*.yaml`, `rules/templates/*.yaml`, `UNIT_POLICY`), not scattered in UI code. If the UI needs a rule, the server sends it (see how `unit_policy` reaches the form's `*` markers); do not copy the rule.
+- Business rules live in **data** (`clients/nicu/catalog/*.yaml`, `clients/hl7v2/rules/templates/*.yaml`, `UNIT_POLICY`), not scattered in UI code. If the UI needs a rule, the server sends it (see how `unit_policy` reaches the form's `*` markers); do not copy the rule.
 
 ## Keep the repo convergent
-- **One way to do each thing.** FHIR calls go through `FhirClient`; charts through `ui/charts.py`; forms through the catalog; logging through `fhirlab.core.obs`. Before adding a helper, dependency or pattern, search for the existing one and extend it.
+- **One way to do each thing.** FHIR calls go through `FhirClient`; charts through `console/charts.py`; forms through the catalog; logging through `fhirlab.core.obs`. Before adding a helper, dependency or pattern, search for the existing one and extend it.
 - **Single source of truth.** If two places must agree, one derives from the other (or tests assert they match). Duplicated constants/logic drift.
 - **Delete what you supersede** in the same change (old code path, stale doc line, dead test). No `_v2`, no parallel implementations, no commented-out code.
 - **Reuse before create.** New module only when a new *layer or concern* appears; otherwise add to the module that owns it. Match existing naming and style.
-- **Docs move with code.** A behavior/port/command change updates `README.md` and the relevant `docs/*.md` in the same commit.
+- **Docs move with code.** A behavior/port/command change updates `README.md` and the relevant `docs/**/*.md` in the same commit.
 - Add a dependency only if nothing present does the job; `uv add`, keep `pyproject.toml` and `uv.lock` together.
 
 ## Commits: regular, isolated, green
@@ -56,7 +60,7 @@ Dependencies point **down** only: `ui` → `service/analytics` → `repo/store` 
 ## Domain rules and gotchas (each cost real time)
 - **Health data hygiene:** logs and metrics carry route templates, resource *types*, outcomes and timings: never bodies, query values or patient ids. Synthetic only; still build as if real.
 - HAPI image is **distroless** (no curl/sh): health checks poll from the host (`make up`). First start takes minutes.
-- HAPI **caches identical searches for 60 s**: state-check lookups send `Cache-Control: no-cache` (`sim/state.py FRESH`). Stale reads are correctness bugs.
+- HAPI **caches identical searches for 60 s**: state-check lookups send `Cache-Control: no-cache` (`clients/nicu/state.py FRESH`). Stale reads are correctness bugs.
 - Stale `If-Match` returns **409** from HAPI (spec says 412). Handle both.
 - HAPI stores our `X-Request-ID` in `hfj_res_ver.request_id` only because of `hapi.fhir.store_meta_source_information` in `docker-compose.yml`. Request ids are ≤16 alphanumerics.
 - DB timestamps are **UTC, naive**. Convert to IST (`Asia/Kolkata`) only at display time, in the UI layer.
@@ -65,4 +69,5 @@ Dependencies point **down** only: `ui` → `service/analytics` → `repo/store` 
 - Streamlit: `st.set_page_config` once, in the entrypoint. Test pages with `AppTest.from_function`; give widgets stable `key=`s. Test data must not leak into real logs (`tests/conftest.py` redirects `FHIRLAB_LOG_PATH`).
 - Altair 6: no nested `alt.condition`; compute a column and use a scale. Never dual-axis charts; fixed-pixel row heights (`_step`) for category charts; categorical colours in fixed order, status red/amber reserved for failure.
 - pandas 3: `None` in object columns becomes `NaN`: test with `isinstance(x, str)`, not truthiness.
+- `urn:h2f:*` identifier systems (idempotency, NICU procedure/bundle, local-lab) are **data stored in HAPI**, not package names: never rename them with the package.
 - Java for Synthea: `/opt/homebrew/opt/openjdk@17/bin/java` (brew formula; the cask needs sudo).
