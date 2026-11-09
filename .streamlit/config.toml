@@ -1,0 +1,2 @@
+[server]
+runOnSave = true   # rerun the page when a watched source file changes (no manual "Rerun" click)

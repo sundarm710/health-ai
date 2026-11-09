@@ -1,0 +1,35 @@
+[project]
+name = "h2f"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "sundarm710", email = "sundar.m710@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "altair>=6.3.0",
+    "fastapi>=0.162.1",
+    "fhir-resources>=8",
+    "httpx>=0.28.1",
+    "matplotlib>=3.11.2",
+    "pandas>=3.0.6",
+    "psycopg[binary]>=3.2",
+    "pyarrow>=25.0.1",
+    "pyyaml>=6.0.3",
+    "rank-bm25>=0.2.2",
+    "rapidfuzz>=3.14.6",
+    "scipy>=1.18.1",
+    "streamlit>=1.64.0",
+    "tabulate>=0.10.0",
+    "uvicorn>=0.53.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.7,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
