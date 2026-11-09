@@ -129,3 +129,29 @@ def waterfall(log: RequestLog) -> pd.DataFrame:
         rows.append({"label": f"{i}. {u.interaction} {u.resource}", "kind": "upstream", "start": u.start_ms,
                      "end": u.start_ms + u.ms, "status": u.status})
     return pd.DataFrame(rows)
+
+
+def route_distribution(df: pd.DataFrame, top: int = 10, bins: int = 28) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Latency distribution per route for the `top` busiest routes.
+
+    Returns (buckets, stats). Buckets share ONE set of log-spaced edges across routes so rows line up on a common axis:
+    columns route, lo, hi, requests, share (fraction of that route's requests). Stats: route, requests, p50, p95, max.
+    Routes are keyed "METHOD /path" and ordered busiest first.
+    """
+    import numpy as np
+
+    cols_b, cols_s = ["route", "lo", "hi", "requests", "share"], ["route", "requests", "p50", "p95", "max"]
+    if df.empty:
+        return pd.DataFrame(columns=cols_b), pd.DataFrame(columns=cols_s)
+    key = df["method"] + " " + df["route"]
+    keep = key.value_counts().head(top).index
+    d = df.assign(route_key=key)[key.isin(keep)]
+    edges = np.geomspace(max(d["ms"].min(), 0.1), max(d["ms"].max(), 0.2) * 1.001, bins + 1)
+    brows, srows = [], []
+    for r in keep:
+        ms = d.loc[d["route_key"] == r, "ms"]
+        cnt, _ = np.histogram(ms.clip(lower=edges[0]), bins=edges)
+        brows += [{"route": r, "lo": round(float(lo), 2), "hi": round(float(hi), 2), "requests": int(c), "share": c / len(ms)}
+                  for lo, hi, c in zip(edges[:-1], edges[1:], cnt, strict=True)]
+        srows.append({"route": r, "requests": len(ms), "p50": _q(ms, .5), "p95": _q(ms, .95), "max": round(float(ms.max()), 1)})
+    return pd.DataFrame(brows, columns=cols_b), pd.DataFrame(srows, columns=cols_s)

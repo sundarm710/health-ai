@@ -113,3 +113,20 @@ def test_garbled_line_does_not_hide_the_rest(tmp_path):
 def test_empty_store_gives_empty_but_well_formed_frames(tmp_path):
     df = an.to_frame([])
     assert an.kpis(df)["requests"] == 0 and an.by_route(df).empty and an.timeseries(df).empty and an.histogram(df).empty
+
+
+def test_route_distribution_top_n_shared_edges_and_percentiles():
+    ts = pd.Timestamp("2026-11-09T10:00:00Z")
+    rows = ([("GET", "/a", ms) for ms in range(1, 101)]  # busiest: 1..100 ms
+            + [("POST", "/b", ms) for ms in (10, 20, 30)] + [("GET", "/c", 500)])
+    df = pd.DataFrame([{"ts": ts, "method": m, "route": r, "ms": float(ms)} for m, r, ms in rows])
+    b, s = an.route_distribution(df, top=2, bins=10)
+    assert list(s["route"]) == ["GET /a", "POST /b"]  # top 2 by count, busiest first; /c dropped
+    assert s.set_index("route").loc["GET /a", "p50"] == 50.5 and s.set_index("route").loc["GET /a", "p95"] == 95.0  # rounded to 0.1 ms
+    per = b.groupby("route")
+    assert per["requests"].sum().to_dict() == {"GET /a": 100, "POST /b": 3}  # every request lands in a bucket
+    assert per["share"].sum().round(6).eq(1).all()
+    edges = lambda r: b[b["route"] == r][["lo", "hi"]].reset_index(drop=True)  # noqa: E731
+    assert edges("GET /a").equals(edges("POST /b"))  # same edges -> rows align
+    e_b, e_s = an.route_distribution(pd.DataFrame(columns=an.COLS))
+    assert e_b.empty and e_s.empty
